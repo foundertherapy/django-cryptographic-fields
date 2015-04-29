@@ -1,0 +1,14 @@
+setuptools
+coverage
+cryptography
+Django==1.7.7
+django_coverage
+flake8
+ipython
+mock
+pep8
+psycopg2
+pyflakes
+pytz
+yolk
+
