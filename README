@@ -1,3 +1,0 @@
-A set of fields that wrap standard Django fields with encryption provided by the python cryptography library. These fields are much more compatible with a 12-factor design since they take their encryption key from the settings file instead of a file on disk used by keyczar.
-
-While keyczar is an excellent for encryption, its not compatible with Python 3, and it requires, for hosts like Heroku, that you either check your key file into your git repository for deployment, or implement manual post-deployment processing to write the key stored in an environment variable into a file that keyczar can read.
