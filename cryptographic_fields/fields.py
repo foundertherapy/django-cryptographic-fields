@@ -1,8 +1,8 @@
-import datetime
-
+import django.db
 import django.db.models
-import django.core.exceptions
 from django.utils.six import with_metaclass
+from django.utils.functional import cached_property
+from django.core import validators
 
 from settings import FIELD_ENCRYPTION_KEY
 
@@ -27,71 +27,13 @@ def calc_encrypted_length(n):
     return len(encrypt_str('a' * n))
 
 
-class EncryptedCharField(
-        with_metaclass(django.db.models.SubfieldBase,
-                       django.db.models.CharField)):
-    description = "A CharField that is encrypted before inserting into a " \
-                  "database using the python cryptography library"
-
+class EncryptedMixin(object):
     def __init__(self, *args, **kwargs):
-        super(EncryptedCharField, self).__init__(*args, **kwargs)
+        super(EncryptedMixin, self).__init__(*args, **kwargs)
         # set the max_length to be large enough to contain the encrypted value
+        if not self.max_length:
+            self.max_length = 10
         self.unencrypted_max_length = self.max_length
-        self.max_length = calc_encrypted_length(self.unencrypted_max_length)
-
-    def to_python(self, value):
-        if value:
-            try:
-                return decrypt_str(value)
-            except cryptography.fernet.InvalidToken:
-                return value
-
-    def get_db_prep_save(self, value, connection):
-        value = super(EncryptedCharField, self).get_db_prep_save(
-            value, connection)
-        if value:
-            return encrypt_str(value)
-        else:
-            return ''
-
-
-class EncryptedTextField(
-        with_metaclass(django.db.models.SubfieldBase,
-                       django.db.models.TextField)):
-    description = "A TextField that is encrypted before inserting into a " \
-                  "database using the python cryptography library"
-
-    def to_python(self, value):
-        if value:
-            try:
-                return decrypt_str(value)
-            except cryptography.fernet.InvalidToken:
-                return value
-
-    def get_db_prep_save(self, value, connection):
-        value = super(EncryptedTextField, self).get_db_prep_save(
-            value, connection)
-        if value:
-            return encrypt_str(value)
-        else:
-            return ''
-
-
-class EncryptedDateField(
-        with_metaclass(django.db.models.SubfieldBase,
-                       django.db.models.DateField)):
-    description = "A DateField that is encrypted before inserting into a " \
-                  "database using the python cryptography library"
-
-    def __init__(self, verbose_name=None, name=None, auto_now=False,
-                 auto_now_add=False, **kwargs):
-        self.auto_now, self.auto_now_add = auto_now, auto_now_add
-        if auto_now or auto_now_add:
-            kwargs['editable'] = False
-            kwargs['blank'] = True
-        super(EncryptedDateField, self).__init__(verbose_name, name, **kwargs)
-        # set the max_length to be large enough to contain the encrypted value
-        self.unencrypted_max_length = 10
         self.max_length = calc_encrypted_length(self.unencrypted_max_length)
 
     def to_python(self, value):
@@ -104,16 +46,115 @@ class EncryptedDateField(
             except cryptography.fernet.InvalidToken:
                 pass
 
-        return super(EncryptedDateField, self).to_python(value)
+        return super(EncryptedMixin, self).to_python(value)
 
     def get_db_prep_save(self, value, connection):
-        value = super(EncryptedDateField, self).get_db_prep_save(
+        value = super(EncryptedMixin, self).get_db_prep_save(
             value, connection)
 
         if value:
-            return encrypt_str(value)
+            return encrypt_str(unicode(value))
         else:
-            return ''
+            return value
 
     def get_internal_type(self):
-        return 'CharField'
+        return "CharField"
+
+
+class EncryptedCharField(
+        with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
+                       django.db.models.CharField)):
+    pass
+
+
+class EncryptedTextField(
+        with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
+                       django.db.models.TextField)):
+    pass
+
+    def get_internal_type(self):
+        return "TextField"
+
+
+class EncryptedDateField(
+        with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
+                       django.db.models.DateField)):
+    pass
+
+
+class EncryptedDateTimeField(
+        with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
+                       django.db.models.DateTimeField)):
+    pass
+
+
+class EncryptedEmailField(
+        with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
+                       django.db.models.EmailField)):
+    pass
+
+
+class EncryptedBooleanField(
+        with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
+                       django.db.models.BooleanField)):
+    unencrypted_max_length = 10
+
+
+
+class EncryptedNullBooleanField(
+        with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
+                       django.db.models.NullBooleanField)):
+    unencrypted_max_length = 10
+
+
+class EncryptedNumberMixin(EncryptedMixin):
+    max_length = 20
+
+    @cached_property
+    def validators(self):
+        # These validators can't be added at field initialization time since
+        # they're based on values retrieved from `connection`.
+        range_validators = []
+        internal_type = self.__class__.__name__[9:]
+        min_value, max_value = django.db.connection.ops.integer_field_range(
+            internal_type)
+        if min_value is not None:
+            range_validators.append(validators.MinValueValidator(min_value))
+        if max_value is not None:
+            range_validators.append(validators.MaxValueValidator(max_value))
+        return super(EncryptedNumberMixin, self).validators + range_validators
+
+
+class EncryptedIntegerField(
+        with_metaclass(django.db.models.SubfieldBase, EncryptedNumberMixin,
+                       django.db.models.IntegerField)):
+    description = "An IntegerField that is encrypted before " \
+                  "inserting into a database using the python cryptography " \
+                  "library"
+    pass
+
+
+class EncryptedPositiveIntegerField(
+        with_metaclass(django.db.models.SubfieldBase, EncryptedNumberMixin,
+                       django.db.models.PositiveIntegerField)):
+    pass
+
+
+class EncryptedSmallIntegerField(
+        with_metaclass(django.db.models.SubfieldBase, EncryptedNumberMixin,
+                       django.db.models.SmallIntegerField)):
+    pass
+
+
+class EncryptedPositiveSmallIntegerField(
+        with_metaclass(django.db.models.SubfieldBase, EncryptedNumberMixin,
+                       django.db.models.PositiveSmallIntegerField)):
+    pass
+
+
+class EncryptedBigIntegerField(
+        with_metaclass(django.db.models.SubfieldBase, EncryptedNumberMixin,
+                       django.db.models.BigIntegerField)):
+    pass
+
+

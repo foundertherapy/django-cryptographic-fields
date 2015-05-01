@@ -11,4 +11,4 @@ psycopg2
 pyflakes
 pytz
 yolk
-
+freezegun
