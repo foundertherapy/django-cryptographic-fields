@@ -91,7 +91,14 @@ class EncryptedDateTimeField(
 class EncryptedEmailField(
         with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
                        django.db.models.EmailField)):
-    pass
+
+    def get_db_prep_save(self, value, connection):
+        if value == True:
+            value = '1'
+        elif value == False:
+            value = '0'
+        return super(EncryptedEmailField, self).get_db_prep_save(
+            value, connection)
 
 
 class EncryptedBooleanField(
@@ -99,6 +106,13 @@ class EncryptedBooleanField(
                        django.db.models.BooleanField)):
     unencrypted_max_length = 10
 
+    def get_db_prep_save(self, value, connection):
+        if value == True:
+            value = '1'
+        elif value == False:
+            value = '0'
+        return super(EncryptedBooleanField, self).get_db_prep_save(
+            value, connection)
 
 
 class EncryptedNullBooleanField(
