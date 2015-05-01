@@ -21,7 +21,7 @@ FIELD_ENCRYPTION_KEY = '6-QgONW6TUl5rt4Xq8u-wBwPcb15sIYS2CN6d69zueM='
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgres',
+        'ENGINE': 'django.db.backends.postgresql',
         'USERNAME': 'ubuntu',
         'HOST': '127.0.0.1',
         'PORT': 5432,
