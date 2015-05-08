@@ -37,7 +37,7 @@ class EncryptedMixin(object):
         self.max_length = calc_encrypted_length(self.unencrypted_max_length)
 
     def to_python(self, value):
-        if not value:
+        if value is None:
             return value
 
         if isinstance(value, basestring):
@@ -52,10 +52,10 @@ class EncryptedMixin(object):
         value = super(EncryptedMixin, self).get_db_prep_save(
             value, connection)
 
-        if value:
-            return encrypt_str(unicode(value))
-        else:
+        if value is None:
             return value
+        else:
+            return encrypt_str(unicode(value))
 
     def get_internal_type(self):
         return "CharField"
@@ -91,14 +91,7 @@ class EncryptedDateTimeField(
 class EncryptedEmailField(
         with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
                        django.db.models.EmailField)):
-
-    def get_db_prep_save(self, value, connection):
-        if value == True:
-            value = '1'
-        elif value == False:
-            value = '0'
-        return super(EncryptedEmailField, self).get_db_prep_save(
-            value, connection)
+    pass
 
 
 class EncryptedBooleanField(
@@ -107,18 +100,28 @@ class EncryptedBooleanField(
     unencrypted_max_length = 10
 
     def get_db_prep_save(self, value, connection):
-        if value == True:
+        if value is None:
+            return value
+        if value is True:
             value = '1'
-        elif value == False:
+        elif value is False:
             value = '0'
-        return super(EncryptedBooleanField, self).get_db_prep_save(
-            value, connection)
+        return encrypt_str(unicode(value))
 
 
 class EncryptedNullBooleanField(
         with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
                        django.db.models.NullBooleanField)):
     unencrypted_max_length = 10
+
+    def get_db_prep_save(self, value, connection):
+        if value is None:
+            return value
+        if value is True:
+            value = '1'
+        elif value is False:
+            value = '0'
+        return encrypt_str(unicode(value))
 
 
 class EncryptedNumberMixin(EncryptedMixin):
