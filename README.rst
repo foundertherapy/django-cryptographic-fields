@@ -55,3 +55,16 @@ when ``EncryptedCharField(max_length=3)`` is specified.
 
 Due to the nature of the encrypted data, filtering by values contained in
 encrypted fields won't work properly. Sorting is also not supported.
+
+Generating an Encryption Key
+----------------------------
+
+There is a Django management command ``generate_encryption_key`` provided
+with the ``cryptographic_fields`` library. Use this command to generate a new
+encryption key to set as ``settings.FIELD_ENCRYPTION_KEY``.
+
+    ./manage.py generate_encryption_key
+
+Running this command will print an encryption key to the terminal, which can
+be configured in your environment or settings file.
+
