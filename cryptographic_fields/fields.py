@@ -9,7 +9,20 @@ from settings import FIELD_ENCRYPTION_KEY
 import cryptography.fernet
 
 
-crypter = cryptography.fernet.Fernet(FIELD_ENCRYPTION_KEY)
+# Allow the use of key rotation
+if isinstance(FIELD_ENCRYPTION_KEY, (tuple, list)):
+    keys = [cryptography.fernet.Fernet(k) for k in FIELD_ENCRYPTION_KEY]
+
+elif isinstance(FIELD_ENCRYPTION_KEY, dict):
+    # allow the keys to be indexed in a dictionary
+    keys = [
+        cryptography.fernet.Fernet(k) for k in FIELD_ENCRYPTION_KEY.values()
+    ]
+else:
+    # else turn the single key into a list of one
+    keys = [cryptography.fernet.Fernet(FIELD_ENCRYPTION_KEY), ]
+
+crypter = cryptography.fernet.MultiFernet(keys)
 
 
 def encrypt_str(s):
@@ -23,7 +36,8 @@ def decrypt_str(t):
 
 
 def calc_encrypted_length(n):
-    # calculates the characters necessary to hold an encrypted string of n bytes
+    # calculates the characters necessary to hold an encrypted string of
+    # n bytes
     return len(encrypt_str('a' * n))
 
 
