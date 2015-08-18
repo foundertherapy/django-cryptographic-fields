@@ -2,10 +2,9 @@ import datetime
 
 from django.test import TestCase
 from django.utils import timezone
-
 import freezegun
 
-import models
+from testapp import models
 
 
 class TestModelTestCase(TestCase):

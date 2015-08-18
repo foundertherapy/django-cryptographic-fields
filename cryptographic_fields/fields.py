@@ -1,12 +1,16 @@
+import os
+
+import cryptography.fernet
+
+from django.core import validators
+from django.conf import settings
 import django.db
 import django.db.models
 from django.utils.six import with_metaclass
 from django.utils.functional import cached_property
-from django.core import validators
 
-from settings import FIELD_ENCRYPTION_KEY
 
-import cryptography.fernet
+FIELD_ENCRYPTION_KEY = settings.FIELD_ENCRYPTION_KEY
 
 
 # Allow the use of key rotation
@@ -25,30 +29,37 @@ else:
 crypter = cryptography.fernet.MultiFernet(keys)
 
 
-def encrypt_str(s):
-    # be sure to encode the string to bytes
+def encrypt_str(s, salt):
+    s = u'{salt}:{string}'.format(
+        salt=os.urandom(salt).encode('base_64'), string=s)
+    # be sure to encode the string to bytes.
     return crypter.encrypt(s.encode('utf-8'))
 
 
-def decrypt_str(t):
+def decrypt_str(t, salt):
     # be sure to decode the bytes to a string
-    return crypter.decrypt(t.encode('utf-8')).decode('utf-8')
+    raw_text = crypter.decrypt(t.encode('utf-8')).decode('utf-8')
+    # remove the salt
+    return raw_text.split(':', 1)[1]
 
 
-def calc_encrypted_length(n):
+def calc_encrypted_length(n, salt):
     # calculates the characters necessary to hold an encrypted string of
     # n bytes
-    return len(encrypt_str('a' * n))
+    return len(encrypt_str('a' * n, salt))
 
 
 class EncryptedMixin(object):
     def __init__(self, *args, **kwargs):
+        self.salt_length = kwargs.pop('salt', 2)
+
         super(EncryptedMixin, self).__init__(*args, **kwargs)
         # set the max_length to be large enough to contain the encrypted value
         if not self.max_length:
             self.max_length = 10
         self.unencrypted_max_length = self.max_length
-        self.max_length = calc_encrypted_length(self.unencrypted_max_length)
+        self.max_length = calc_encrypted_length(
+            self.unencrypted_max_length, self.salt_length)
 
     def to_python(self, value):
         if value is None:
@@ -56,7 +67,7 @@ class EncryptedMixin(object):
 
         if isinstance(value, basestring):
             try:
-                value = decrypt_str(value)
+                value = decrypt_str(value, self.salt_length)
             except cryptography.fernet.InvalidToken:
                 pass
 
@@ -69,7 +80,7 @@ class EncryptedMixin(object):
         if value is None:
             return value
         else:
-            return encrypt_str(unicode(value))
+            return encrypt_str(unicode(value), self.salt_length)
 
     def get_internal_type(self):
         return "CharField"
@@ -120,7 +131,7 @@ class EncryptedBooleanField(
             value = '1'
         elif value is False:
             value = '0'
-        return encrypt_str(unicode(value))
+        return encrypt_str(unicode(value), self.salt_length)
 
 
 class EncryptedNullBooleanField(
@@ -135,7 +146,7 @@ class EncryptedNullBooleanField(
             value = '1'
         elif value is False:
             value = '0'
-        return encrypt_str(unicode(value))
+        return encrypt_str(unicode(value), self.salt_length)
 
 
 class EncryptedNumberMixin(EncryptedMixin):
