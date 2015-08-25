@@ -4,7 +4,7 @@ from cryptographic_fields import fields
 
 
 class TestModel(django.db.models.Model):
-    enc_char_field = fields.EncryptedCharField(max_length=100, salt=10)
+    enc_char_field = fields.EncryptedCharField(max_length=100, salt_length=10)
     enc_text_field = fields.EncryptedTextField()
     enc_date_field = fields.EncryptedDateField(null=True)
     enc_date_now_field = fields.EncryptedDateField(auto_now=True, null=True)

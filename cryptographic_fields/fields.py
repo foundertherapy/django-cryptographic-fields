@@ -1,4 +1,8 @@
+import base64
 import os
+import math
+import random
+import string
 
 import cryptography.fernet
 
@@ -11,7 +15,7 @@ from django.utils.functional import cached_property
 
 
 FIELD_ENCRYPTION_KEY = settings.FIELD_ENCRYPTION_KEY
-
+ALPHABET = string.ascii_letters + string.digits
 
 # Allow the use of key rotation
 if isinstance(FIELD_ENCRYPTION_KEY, (tuple, list)):
@@ -29,29 +33,29 @@ else:
 crypter = cryptography.fernet.MultiFernet(keys)
 
 
-def encrypt_str(s, salt):
-    s = u'{salt}:{string}'.format(
-        salt=os.urandom(salt).encode('base_64'), string=s)
+def encrypt_str(s, salt_length):
+    salt = ''.join(random.choice(ALPHABET) for i in range(salt_length))
+    s = u'{salt}{string}'.format(salt=salt, string=s)
     # be sure to encode the string to bytes.
     return crypter.encrypt(s.encode('utf-8'))
 
 
-def decrypt_str(t, salt):
+def decrypt_str(t, salt_length):
     # be sure to decode the bytes to a string
     raw_text = crypter.decrypt(t.encode('utf-8')).decode('utf-8')
     # remove the salt
-    return raw_text.split(':', 1)[1]
+    return raw_text[salt_length:]
 
 
-def calc_encrypted_length(n, salt):
+def calc_encrypted_length(n, salt_length):
     # calculates the characters necessary to hold an encrypted string of
     # n bytes
-    return len(encrypt_str('a' * n, salt))
+    return len(encrypt_str('a' * n, salt_length))
 
 
 class EncryptedMixin(object):
     def __init__(self, *args, **kwargs):
-        self.salt_length = kwargs.pop('salt', 2)
+        self.salt_length = kwargs.pop('salt_length', 2)
 
         super(EncryptedMixin, self).__init__(*args, **kwargs)
         # set the max_length to be large enough to contain the encrypted value
