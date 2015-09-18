@@ -1,28 +1,48 @@
+import random
+
 import django.db
 import django.db.models
 from django.utils.six import with_metaclass
 from django.utils.functional import cached_property
 from django.core import validators
 
-from settings import FIELD_ENCRYPTION_KEY
+from cryptographic_fields.settings import FIELD_ENCRYPTION_KEY
 
-import cryptography.fernet
+from cryptography.fernet import Fernet, InvalidToken
+
+
+class MultiFernet(object):
+    def __init__(self, fernets):
+        fernets = list(fernets)
+        if not fernets:
+            raise ValueError(
+                "MultiFernet requires at least one Fernet instance"
+            )
+        self._fernets = fernets
+
+    def encrypt(self, msg):
+        return random.choice(self._fernets).encrypt(msg)
+
+    def decrypt(self, msg, ttl=None):
+        for f in self._fernets:
+            try:
+                return f.decrypt(msg, ttl)
+            except InvalidToken:
+                pass
+        raise InvalidToken
 
 
 # Allow the use of key rotation
 if isinstance(FIELD_ENCRYPTION_KEY, (tuple, list)):
-    keys = [cryptography.fernet.Fernet(k) for k in FIELD_ENCRYPTION_KEY]
-
+    keys = [Fernet(k) for k in FIELD_ENCRYPTION_KEY]
+    crypter = MultiFernet(keys)
 elif isinstance(FIELD_ENCRYPTION_KEY, dict):
     # allow the keys to be indexed in a dictionary
-    keys = [
-        cryptography.fernet.Fernet(k) for k in FIELD_ENCRYPTION_KEY.values()
-    ]
+    keys = [Fernet(k) for k in FIELD_ENCRYPTION_KEY.values()]
+    crypter = MultiFernet(keys)
 else:
     # else turn the single key into a list of one
-    keys = [cryptography.fernet.Fernet(FIELD_ENCRYPTION_KEY), ]
-
-crypter = cryptography.fernet.MultiFernet(keys)
+    crypter = Fernet(FIELD_ENCRYPTION_KEY)
 
 
 def encrypt_str(s):
@@ -57,7 +77,7 @@ class EncryptedMixin(object):
         if isinstance(value, basestring):
             try:
                 value = decrypt_str(value)
-            except cryptography.fernet.InvalidToken:
+            except InvalidToken:
                 pass
 
         return super(EncryptedMixin, self).to_python(value)
