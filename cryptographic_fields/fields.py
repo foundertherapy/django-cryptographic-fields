@@ -4,7 +4,7 @@ from django.utils.six import with_metaclass, PY2, string_types
 from django.utils.functional import cached_property
 from django.core import validators
 
-from .settings import FIELD_ENCRYPTION_KEY
+from cryptographic_fields.settings import FIELD_ENCRYPTION_KEY
 
 import cryptography.fernet
 
@@ -45,10 +45,9 @@ class EncryptedMixin(object):
     def __init__(self, *args, **kwargs):
         super(EncryptedMixin, self).__init__(*args, **kwargs)
         # set the max_length to be large enough to contain the encrypted value
-        if not self.max_length:
-            self.max_length = 10
-        self.unencrypted_max_length = self.max_length
-        self.max_length = calc_encrypted_length(self.unencrypted_max_length)
+        if self.max_length:
+            self.unencrypted_max_length = self.max_length
+            self.max_length = calc_encrypted_length(self.unencrypted_max_length)
 
     def to_python(self, value):
         if value is None:
@@ -76,12 +75,21 @@ class EncryptedMixin(object):
         return (encrypt_str(str(value))).decode('utf-8')
 
     def get_internal_type(self):
-        return "CharField"
+        return "TextField"
+
+    def deconstruct(self):
+        name, path, args, kwargs = super(EncryptedMixin, self).deconstruct()
+
+        if 'max_length' in kwargs:
+            del kwargs['max_length']
+
+        return name, path, args, kwargs
 
 
 class EncryptedCharField(
         with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
                        django.db.models.CharField)):
+
     pass
 
 
@@ -89,9 +97,6 @@ class EncryptedTextField(
         with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
                        django.db.models.TextField)):
     pass
-
-    def get_internal_type(self):
-        return "TextField"
 
 
 class EncryptedDateField(

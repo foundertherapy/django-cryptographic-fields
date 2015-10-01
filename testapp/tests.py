@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import datetime
 
+from django.forms import ModelForm
 from django.test import TestCase
 from django.utils import timezone
 
@@ -129,40 +130,40 @@ class TestModelTestCase(TestCase):
     def test_get_internal_type(self):
         self.assertEqual(
             models.TestModel.enc_char_field.field.get_internal_type(),
-            'CharField')
+            'TextField')
         self.assertEqual(
             models.TestModel.enc_text_field.field.get_internal_type(),
             'TextField')
         self.assertEqual(
             models.TestModel.enc_date_field.field.get_internal_type(),
-            'CharField')
+            'TextField')
         self.assertEqual(
             models.TestModel.enc_date_now_field.field.get_internal_type(),
-            'CharField')
+            'TextField')
         self.assertEqual(
             models.TestModel.enc_boolean_field.field.get_internal_type(),
-            'CharField')
+            'TextField')
         self.assertEqual(
             models.TestModel.enc_null_boolean_field.field.get_internal_type(),
-            'CharField')
+            'TextField')
 
         self.assertEqual(
             models.TestModel.enc_integer_field.field.get_internal_type(),
-            'CharField')
+            'TextField')
         self.assertEqual(
             models.TestModel.enc_positive_integer_field.field.
                 get_internal_type(),
-            'CharField')
+            'TextField')
         self.assertEqual(
             models.TestModel.enc_small_integer_field.field.get_internal_type(),
-            'CharField')
+            'TextField')
         self.assertEqual(
             models.TestModel.enc_positive_small_integer_field.field.
                 get_internal_type(),
-            'CharField')
+            'TextField')
         self.assertEqual(
             models.TestModel.enc_big_integer_field.field.get_internal_type(),
-            'CharField')
+            'TextField')
 
     def test_auto_date(self):
         self.assertTrue(models.TestModel.enc_date_now_field.field.auto_now)
@@ -170,3 +171,15 @@ class TestModelTestCase(TestCase):
         self.assertFalse(models.TestModel.enc_date_now_field.field.auto_now_add)
         self.assertTrue(
             models.TestModel.enc_date_now_add_field.field.auto_now_add)
+
+    def test_max_length_validation(self):
+        class TestModelForm(ModelForm):
+            class Meta:
+                model = models.TestModel
+                fields = ('enc_char_field', )
+
+        f = TestModelForm(data={'enc_char_field': 'a' * 200})
+        self.assertFalse(f.is_valid())
+
+        f = TestModelForm(data={'enc_char_field': 'a' * 99})
+        self.assertTrue(f.is_valid())
