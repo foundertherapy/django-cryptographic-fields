@@ -84,7 +84,10 @@ class EncryptedCharField(
 class EncryptedTextField(
         with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
                        django.db.models.TextField)):
-    pass
+    def __init__(self, *args, **kwargs):
+        super(EncryptedTextField, self).__init__(*args, **kwargs)
+        self.unencrypted_max_length = None
+        self.max_length = None
 
     def get_internal_type(self):
         return "TextField"
@@ -187,5 +190,3 @@ class EncryptedBigIntegerField(
         with_metaclass(django.db.models.SubfieldBase, EncryptedNumberMixin,
                        django.db.models.BigIntegerField)):
     pass
-
-
