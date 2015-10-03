@@ -4,7 +4,7 @@ from django.utils.six import with_metaclass
 from django.utils.functional import cached_property
 from django.core import validators
 
-from settings import FIELD_ENCRYPTION_KEY
+from .settings import FIELD_ENCRYPTION_KEY
 
 import cryptography.fernet
 
