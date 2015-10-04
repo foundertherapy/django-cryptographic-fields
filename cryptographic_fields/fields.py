@@ -187,5 +187,3 @@ class EncryptedBigIntegerField(
         with_metaclass(django.db.models.SubfieldBase, EncryptedNumberMixin,
                        django.db.models.BigIntegerField)):
     pass
-
-
