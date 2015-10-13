@@ -52,7 +52,7 @@ class EncryptedMixin(object):
 
     def deconstruct(self):
         name, path, args, kwargs = super(EncryptedMixin, self).deconstruct()
-        kwargs["max_length"] = self.unencrypted_max_length
+        kwargs["max_length"] = self.max_length
 
         return name, path, args, kwargs
 
