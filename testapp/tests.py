@@ -1,11 +1,11 @@
+from __future__ import unicode_literals
+
 import datetime
 
 from django.test import TestCase
 from django.utils import timezone
 
-import freezegun
-
-import models
+from . import models
 
 
 class TestModelTestCase(TestCase):
@@ -59,9 +59,7 @@ class TestModelTestCase(TestCase):
         inst.enc_small_integer_field = -123456789
         inst.enc_positive_small_integer_field = 0
         inst.enc_big_integer_field = -9223372036854775806
-        # need to freeze time for date_now and date_add fields
-        with freezegun.freeze_time(test_date):
-            inst.save()
+        inst.save()
 
         inst = models.TestModel.objects.get()
         self.assertEqual(
@@ -69,8 +67,8 @@ class TestModelTestCase(TestCase):
         self.assertEqual(
             inst.enc_text_field, 'This is another test string2!')
         self.assertEqual(inst.enc_date_field, test_date)
-        self.assertEqual(inst.enc_date_now_field, test_date)
-        self.assertEqual(inst.enc_date_now_add_field, test_date_today)
+        self.assertEqual(inst.enc_date_now_field, datetime.date.today())
+        self.assertEqual(inst.enc_date_now_add_field, datetime.date.today())
         # be careful about sqlite testing, which doesn't support native dates
         if timezone.is_naive(inst.enc_datetime_field):
             inst.enc_datetime_field = timezone.make_aware(
@@ -120,7 +118,7 @@ class TestModelTestCase(TestCase):
             if key == 'id':
                 continue
             self.assertEqual(
-                value[:7], u'gAAAAAB', '{} failed: {}'.format(key, value))
+                value[:7], 'gAAAAAB', '{} failed: {}'.format(key, value))
 
         inst.enc_null_boolean_field = None
         inst.save()

@@ -1,6 +1,6 @@
 import django.db
 import django.db.models
-from django.utils.six import with_metaclass
+from django.utils.six import with_metaclass, PY2, string_types
 from django.utils.functional import cached_property
 from django.core import validators
 
@@ -54,7 +54,9 @@ class EncryptedMixin(object):
         if value is None:
             return value
 
-        if isinstance(value, basestring):
+        if isinstance(value, (bytes, string_types[0])):
+            if isinstance(value, bytes):
+                value = value.decode('utf-8')
             try:
                 value = decrypt_str(value)
             except cryptography.fernet.InvalidToken:
@@ -68,8 +70,10 @@ class EncryptedMixin(object):
 
         if value is None:
             return value
-        else:
+        if PY2:
             return encrypt_str(unicode(value))
+        # decode the encrypted value to a unicode string, else this breaks in pgsql
+        return (encrypt_str(str(value))).decode('utf-8')
 
     def get_internal_type(self):
         return "CharField"
@@ -120,7 +124,10 @@ class EncryptedBooleanField(
             value = '1'
         elif value is False:
             value = '0'
-        return encrypt_str(unicode(value))
+        if PY2:
+            return encrypt_str(unicode(value))
+        # decode the encrypted value to a unicode string, else this breaks in pgsql
+        return encrypt_str(str(value)).decode('utf-8')
 
 
 class EncryptedNullBooleanField(
@@ -135,7 +142,10 @@ class EncryptedNullBooleanField(
             value = '1'
         elif value is False:
             value = '0'
-        return encrypt_str(unicode(value))
+        if PY2:
+            return encrypt_str(unicode(value))
+        # decode the encrypted value to a unicode string, else this breaks in pgsql
+        return encrypt_str(str(value)).decode('utf-8')
 
 
 class EncryptedNumberMixin(EncryptedMixin):
