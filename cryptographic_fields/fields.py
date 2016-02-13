@@ -43,6 +43,7 @@ def calc_encrypted_length(n):
 
 class EncryptedMixin(object):
     def __init__(self, *args, **kwargs):
+        self.max_length = kwargs.pop('encrypted_max_length', None)
         super(EncryptedMixin, self).__init__(*args, **kwargs)
         # set the max_length to be large enough to contain the encrypted value
         if not self.max_length:

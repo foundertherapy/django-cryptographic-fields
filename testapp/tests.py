@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import datetime
 
+from cryptographic_fields.fields import calc_encrypted_length
 from django.test import TestCase
 from django.utils import timezone
 
@@ -99,6 +100,7 @@ class TestModelTestCase(TestCase):
 
     def test_raw_value(self):
         inst = models.TestModel()
+        inst.enc_char_field_no_length_conversion = 'This is a test string!'
         inst.enc_char_field = 'This is a test string!'
         inst.enc_text_field = 'This is a test string2!'
         inst.enc_date_field = datetime.date(2011, 1, 1)
@@ -170,3 +172,16 @@ class TestModelTestCase(TestCase):
         self.assertFalse(models.TestModel.enc_date_now_field.field.auto_now_add)
         self.assertTrue(
             models.TestModel.enc_date_now_add_field.field.auto_now_add)
+
+    def test_field_length_conversion(self):
+        """
+        Ensure that length is not converted if encrypted_max_length is provided
+        """
+        BASE_CHAR_LENGTH = 100
+        inst = models.TestModel()
+        converted_char_field = inst._meta.get_field('enc_char_field')
+        non_converted_char_field = inst._meta.get_field(
+            'enc_char_field_no_length_conversion')
+        converted_length = calc_encrypted_length(BASE_CHAR_LENGTH)
+        self.assertEqual(non_converted_char_field.max_length, 100)
+        self.assertEqual(converted_char_field.max_length, converted_length)
