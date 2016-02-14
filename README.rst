@@ -45,16 +45,30 @@ To use an encrypted field in a Django model, use one of the fields from the
     from cryptographic_fields.fields import EncryptedCharField
 
     class EncryptedFieldModel(models.Model):
-        encrypted_char_field = EncryptedCharField(max_length=100)
+        encrypted_char_field = EncryptedCharField(encrypted_max_length=100)
 
-For fields that require ``max_length`` to be specified, the ``Encrypted``
-variants of those fields will automatically increase the size of the database
-field to hold the encrypted form of the content. For example, a 3 character
-CharField will automatically specify a database field size of 100 characters
-when ``EncryptedCharField(max_length=3)`` is specified.
+Determining Encrypted Field Length
+----------------------------------
 
-Due to the nature of the encrypted data, filtering by values contained in
-encrypted fields won't work properly. Sorting is also not supported.
+For fields that require ``max_length`` to be specified, you will want to specify
+``encrypted_max_length`` instead of ``max_length``. There is a management
+command to calculate the correct size of ``encrypted_max_length``. So, for a
+field that would normally have a ``max_length`` of 50, you would run the
+following command to get the correct value for ``encrypted_max_length``.
+
+    ./manage.py calculate_max_length 50
+
+You would then use the resulting value to specify ``encrypted_max_length`` in
+your models, instead of passing the traditional ``max_length`` argument.
+
+`Note` that if you decide to skip this step and simply specify ``max_length``,
+the ``Encrypted`` variants of those fields will automatically increase the
+size of the database field to hold the encrypted form of the content. For
+example, a 3 character CharField will automatically specify a database
+field size of 100 characters when ``EncryptedCharField(max_length=3)``
+is specified. The problem with this is that ``django-admin makemigrations`` will
+always create a migration, because it will see that the ``max_length`` of the
+actual model object is different than what you have specified.
 
 Generating an Encryption Key
 ----------------------------
@@ -68,3 +82,8 @@ encryption key to set as ``settings.FIELD_ENCRYPTION_KEY``.
 Running this command will print an encryption key to the terminal, which can
 be configured in your environment or settings file.
 
+Limitations
+-----------
+
+Due to the nature of the encrypted data, filtering by values contained in
+encrypted fields won't work properly. Sorting is also not supported.
