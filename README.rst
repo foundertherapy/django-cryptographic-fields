@@ -61,7 +61,7 @@ following command to get the correct value for ``encrypted_max_length``.
 You would then use the resulting value to specify ``encrypted_max_length`` in
 your models, instead of passing the traditional ``max_length`` argument.
 
-`Note` that if you decide to skip this step and simply specify ``max_length``,
+**Note** that if you decide to skip this step and simply specify ``max_length``,
 the ``Encrypted`` variants of those fields will automatically increase the
 size of the database field to hold the encrypted form of the content. For
 example, a 3 character CharField will automatically specify a database
