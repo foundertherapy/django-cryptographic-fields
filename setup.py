@@ -20,14 +20,14 @@ setup(
     name='django-cryptographic-fields',
     version=version,
     packages=['cryptographic_fields'],
-    # license='MIT License',
-    # include_package_data=True,
+    license='MIT',
+    include_package_data=True,
     description=(
         'A set of django fields that internally are encrypted using the '
         'cryptography.io native python encryption library.'
     ),
     url='http://github.com/foundertherapy/django-cryptographic-fields/',
-    download_url='https://github.com/foundertherapy/django-cryptographic-fields/archive/v0.1-alpha.tar.gz',
+    download_url='https://github.com/foundertherapy/django-cryptographic-fields/archive/0.3.0.tar.gz',
     author='Dana Spiegel',
     author_email='dana@foundertherapy.co',
     install_requires=[
