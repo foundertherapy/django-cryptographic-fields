@@ -27,7 +27,7 @@ setup(
         'cryptography.io native python encryption library.'
     ),
     url='http://github.com/foundertherapy/django-cryptographic-fields/',
-    download_url='https://github.com/foundertherapy/django-cryptographic-fields/archive/0.3.0.tar.gz',
+    download_url='https://github.com/foundertherapy/django-cryptographic-fields/archive/' + version + '.tar.gz',
     author='Dana Spiegel',
     author_email='dana@foundertherapy.co',
     install_requires=[
