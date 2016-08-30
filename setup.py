@@ -29,7 +29,7 @@ setup(
     url='http://github.com/foundertherapy/django-cryptographic-fields/',
     download_url='https://github.com/foundertherapy/django-cryptographic-fields/archive/' + version + '.tar.gz',
     author='Dana Spiegel',
-    author_email='dana@foundertherapy.co',
+    author_email='nasief304@gmail.com',
     install_requires=[
         'Django>=1.7',
         'cryptography>=0.8.2',
