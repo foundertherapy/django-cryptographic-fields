@@ -42,13 +42,6 @@ def calc_encrypted_length(n):
 
 
 class EncryptedMixin(object):
-    def __init__(self, *args, **kwargs):
-        super(EncryptedMixin, self).__init__(*args, **kwargs)
-        # set the max_length to be large enough to contain the encrypted value
-        if self.max_length:
-            self.unencrypted_max_length = self.max_length
-            self.max_length = calc_encrypted_length(self.unencrypted_max_length)
-
     def to_python(self, value):
         if value is None:
             return value
