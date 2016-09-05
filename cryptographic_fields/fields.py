@@ -113,7 +113,6 @@ class EncryptedEmailField(
 class EncryptedBooleanField(
         with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
                        django.db.models.BooleanField)):
-    unencrypted_max_length = 10
 
     def get_db_prep_save(self, value, connection):
         if value is None:
@@ -131,7 +130,6 @@ class EncryptedBooleanField(
 class EncryptedNullBooleanField(
         with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
                        django.db.models.NullBooleanField)):
-    unencrypted_max_length = 10
 
     def get_db_prep_save(self, value, connection):
         if value is None:
