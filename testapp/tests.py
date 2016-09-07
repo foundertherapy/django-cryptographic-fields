@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import datetime
+import mock
 
 from django.forms import ModelForm
 from django.test import TestCase
@@ -98,7 +99,10 @@ class TestModelTestCase(TestCase):
         self.assertEqual(inst2.enc_char_field, u'\xa2\u221e\xa7\xb6\u2022\xaa')
         self.assertEqual(inst2.enc_text_field, u'\xa2\u221e\xa7\xb6\u2022\xa2')
 
-    def test_raw_value(self):
+    @mock.patch('django.db.models.sql.compiler.SQLCompiler.get_converters')
+    def test_raw_value(self, get_converters_method):
+        get_converters_method.return_value = []
+
         inst = models.TestModel()
         inst.enc_char_field = 'This is a test string!'
         inst.enc_text_field = 'This is a test string2!'
@@ -128,49 +132,42 @@ class TestModelTestCase(TestCase):
         self.assertEqual(d['enc_null_boolean_field'], None)
 
     def test_get_internal_type(self):
-        self.assertEqual(
-            models.TestModel.enc_char_field.field.get_internal_type(),
-            'TextField')
-        self.assertEqual(
-            models.TestModel.enc_text_field.field.get_internal_type(),
-            'TextField')
-        self.assertEqual(
-            models.TestModel.enc_date_field.field.get_internal_type(),
-            'TextField')
-        self.assertEqual(
-            models.TestModel.enc_date_now_field.field.get_internal_type(),
-            'TextField')
-        self.assertEqual(
-            models.TestModel.enc_boolean_field.field.get_internal_type(),
-            'TextField')
-        self.assertEqual(
-            models.TestModel.enc_null_boolean_field.field.get_internal_type(),
-            'TextField')
+        enc_char_field = models.TestModel._meta.fields[1]
+        enc_text_field = models.TestModel._meta.fields[2]
+        enc_date_field = models.TestModel._meta.fields[3]
+        enc_date_now_field = models.TestModel._meta.fields[4]
+        enc_boolean_field = models.TestModel._meta.fields[7]
+        enc_null_boolean_field = models.TestModel._meta.fields[8]
+        enc_integer_field = models.TestModel._meta.fields[9]
+        enc_positive_integer_field = models.TestModel._meta.fields[10]
+        enc_small_integer_field = models.TestModel._meta.fields[11]
+        enc_positive_small_integer_field = models.TestModel._meta.fields[12]
+        enc_big_integer_field = models.TestModel._meta.fields[13]
 
-        self.assertEqual(
-            models.TestModel.enc_integer_field.field.get_internal_type(),
-            'TextField')
-        self.assertEqual(
-            models.TestModel.enc_positive_integer_field.field.
-                get_internal_type(),
-            'TextField')
-        self.assertEqual(
-            models.TestModel.enc_small_integer_field.field.get_internal_type(),
-            'TextField')
-        self.assertEqual(
-            models.TestModel.enc_positive_small_integer_field.field.
-                get_internal_type(),
-            'TextField')
-        self.assertEqual(
-            models.TestModel.enc_big_integer_field.field.get_internal_type(),
-            'TextField')
+        self.assertEqual(enc_char_field.get_internal_type(), 'TextField')
+        self.assertEqual(enc_text_field.get_internal_type(), 'TextField')
+        self.assertEqual(enc_date_field.get_internal_type(), 'TextField')
+        self.assertEqual(enc_date_now_field.get_internal_type(), 'TextField')
+        self.assertEqual(enc_boolean_field.get_internal_type(), 'TextField')
+        self.assertEqual(enc_null_boolean_field.get_internal_type(), 'TextField')
+
+        self.assertEqual(enc_integer_field.get_internal_type(), 'TextField')
+        self.assertEqual(enc_positive_integer_field.get_internal_type(), 'TextField')
+        self.assertEqual(enc_small_integer_field.get_internal_type(), 'TextField')
+        self.assertEqual(enc_positive_small_integer_field.get_internal_type(), 'TextField')
+        self.assertEqual(enc_big_integer_field.get_internal_type(), 'TextField')
 
     def test_auto_date(self):
-        self.assertTrue(models.TestModel.enc_date_now_field.field.auto_now)
-        self.assertFalse(models.TestModel.enc_date_now_add_field.field.auto_now)
-        self.assertFalse(models.TestModel.enc_date_now_field.field.auto_now_add)
-        self.assertTrue(
-            models.TestModel.enc_date_now_add_field.field.auto_now_add)
+        enc_date_now_field = models.TestModel._meta.fields[4]
+        self.assertEqual(enc_date_now_field.name, 'enc_date_now_field')
+        self.assertTrue(enc_date_now_field.auto_now)
+
+        enc_date_now_add_field = models.TestModel._meta.fields[5]
+        self.assertEqual(enc_date_now_add_field.name, 'enc_date_now_add_field')
+        self.assertFalse(enc_date_now_add_field.auto_now)
+
+        self.assertFalse(enc_date_now_field.auto_now_add)
+        self.assertTrue(enc_date_now_add_field.auto_now_add)
 
     def test_max_length_validation(self):
         class TestModelForm(ModelForm):

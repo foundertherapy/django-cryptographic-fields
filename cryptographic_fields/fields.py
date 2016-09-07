@@ -1,6 +1,6 @@
 import django.db
 import django.db.models
-from django.utils.six import with_metaclass, PY2, string_types
+from django.utils.six import PY2, string_types
 from django.utils.functional import cached_property
 from django.core import validators
 
@@ -56,6 +56,9 @@ class EncryptedMixin(object):
 
         return super(EncryptedMixin, self).to_python(value)
 
+    def from_db_value(self, value, expression, connection, context):
+        return self.to_python(value)
+
     def get_db_prep_save(self, value, connection):
         value = super(EncryptedMixin, self).get_db_prep_save(
             value, connection)
@@ -79,40 +82,28 @@ class EncryptedMixin(object):
         return name, path, args, kwargs
 
 
-class EncryptedCharField(
-        with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
-                       django.db.models.CharField)):
+class EncryptedCharField(EncryptedMixin, django.db.models.CharField):
 
     pass
 
 
-class EncryptedTextField(
-        with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
-                       django.db.models.TextField)):
+class EncryptedTextField(EncryptedMixin, django.db.models.TextField):
     pass
 
 
-class EncryptedDateField(
-        with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
-                       django.db.models.DateField)):
+class EncryptedDateField(EncryptedMixin, django.db.models.DateField):
     pass
 
 
-class EncryptedDateTimeField(
-        with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
-                       django.db.models.DateTimeField)):
+class EncryptedDateTimeField(EncryptedMixin, django.db.models.DateTimeField):
     pass
 
 
-class EncryptedEmailField(
-        with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
-                       django.db.models.EmailField)):
+class EncryptedEmailField(EncryptedMixin, django.db.models.EmailField):
     pass
 
 
-class EncryptedBooleanField(
-        with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
-                       django.db.models.BooleanField)):
+class EncryptedBooleanField(EncryptedMixin, django.db.models.BooleanField):
 
     def get_db_prep_save(self, value, connection):
         if value is None:
@@ -127,9 +118,7 @@ class EncryptedBooleanField(
         return encrypt_str(str(value)).decode('utf-8')
 
 
-class EncryptedNullBooleanField(
-        with_metaclass(django.db.models.SubfieldBase, EncryptedMixin,
-                       django.db.models.NullBooleanField)):
+class EncryptedNullBooleanField(EncryptedMixin, django.db.models.NullBooleanField):
 
     def get_db_prep_save(self, value, connection):
         if value is None:
@@ -162,34 +151,24 @@ class EncryptedNumberMixin(EncryptedMixin):
         return super(EncryptedNumberMixin, self).validators + range_validators
 
 
-class EncryptedIntegerField(
-        with_metaclass(django.db.models.SubfieldBase, EncryptedNumberMixin,
-                       django.db.models.IntegerField)):
+class EncryptedIntegerField(EncryptedNumberMixin, django.db.models.IntegerField):
     description = "An IntegerField that is encrypted before " \
                   "inserting into a database using the python cryptography " \
                   "library"
     pass
 
 
-class EncryptedPositiveIntegerField(
-        with_metaclass(django.db.models.SubfieldBase, EncryptedNumberMixin,
-                       django.db.models.PositiveIntegerField)):
+class EncryptedPositiveIntegerField(EncryptedNumberMixin, django.db.models.PositiveIntegerField):
     pass
 
 
-class EncryptedSmallIntegerField(
-        with_metaclass(django.db.models.SubfieldBase, EncryptedNumberMixin,
-                       django.db.models.SmallIntegerField)):
+class EncryptedSmallIntegerField(EncryptedNumberMixin, django.db.models.SmallIntegerField):
     pass
 
 
-class EncryptedPositiveSmallIntegerField(
-        with_metaclass(django.db.models.SubfieldBase, EncryptedNumberMixin,
-                       django.db.models.PositiveSmallIntegerField)):
+class EncryptedPositiveSmallIntegerField(EncryptedNumberMixin, django.db.models.PositiveSmallIntegerField):
     pass
 
 
-class EncryptedBigIntegerField(
-        with_metaclass(django.db.models.SubfieldBase, EncryptedNumberMixin,
-                       django.db.models.BigIntegerField)):
+class EncryptedBigIntegerField(EncryptedNumberMixin, django.db.models.BigIntegerField):
     pass
