@@ -1,38 +1,52 @@
+from __future__ import unicode_literals
+
+import sys
+
 import django.db
 import django.db.models
 from django.utils.six import PY2, string_types
 from django.utils.functional import cached_property
 from django.core import validators
-
-from cryptographic_fields.settings import FIELD_ENCRYPTION_KEY
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 import cryptography.fernet
 
 
-# Allow the use of key rotation
-if isinstance(FIELD_ENCRYPTION_KEY, (tuple, list)):
-    keys = [cryptography.fernet.Fernet(k) for k in FIELD_ENCRYPTION_KEY]
+def get_crypter():
+    configured_keys = getattr(settings, 'FIELD_ENCRYPTION_KEY')
 
-elif isinstance(FIELD_ENCRYPTION_KEY, dict):
-    # allow the keys to be indexed in a dictionary
-    keys = [
-        cryptography.fernet.Fernet(k) for k in FIELD_ENCRYPTION_KEY.values()
-    ]
-else:
-    # else turn the single key into a list of one
-    keys = [cryptography.fernet.Fernet(FIELD_ENCRYPTION_KEY), ]
+    if configured_keys is None:
+        raise ImproperlyConfigured('FIELD_ENCRYPTION_KEY must be defined in settings')
 
-crypter = cryptography.fernet.MultiFernet(keys)
+    try:
+        # Allow the use of key rotation
+        if isinstance(configured_keys, (tuple, list)):
+            keys = [cryptography.fernet.Fernet(str(k)) for k in configured_keys]
+        else:
+            # else turn the single key into a list of one
+            keys = [cryptography.fernet.Fernet(str(configured_keys)), ]
+    except Exception as e:
+        raise ImproperlyConfigured(
+            'FIELD_ENCRYPTION_KEY defined incorrectly: {}'.format(str(e))), None, sys.exc_info()[2]
+
+    if len(keys) == 0:
+        raise ImproperlyConfigured('No keys defined in setting FIELD_ENCRYPTION_KEY')
+
+    return cryptography.fernet.MultiFernet(keys)
+
+
+CRYPTER = get_crypter()
 
 
 def encrypt_str(s):
     # be sure to encode the string to bytes
-    return crypter.encrypt(s.encode('utf-8'))
+    return CRYPTER.encrypt(s.encode('utf-8'))
 
 
 def decrypt_str(t):
     # be sure to decode the bytes to a string
-    return crypter.decrypt(t.encode('utf-8')).decode('utf-8')
+    return CRYPTER.decrypt(t.encode('utf-8')).decode('utf-8')
 
 
 def calc_encrypted_length(n):
