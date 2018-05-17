@@ -28,7 +28,7 @@ def get_crypter():
             keys = [cryptography.fernet.Fernet(str(configured_keys)), ]
     except Exception as e:
         raise ImproperlyConfigured(
-            'FIELD_ENCRYPTION_KEY defined incorrectly: {}'.format(str(e))), None, sys.exc_info()[2]
+            'FIELD_ENCRYPTION_KEY defined incorrectly: {}'.format(str(e)), None, sys.exc_info()[2])
 
     if len(keys) == 0:
         raise ImproperlyConfigured('No keys defined in setting FIELD_ENCRYPTION_KEY')
