@@ -24,7 +24,7 @@ Getting Started
 
     $ pip install django-cryptographic-fields
 
-Add "cryptographic_fields" to your INSTALLED_APPS setting like this::
+Add "cryptographic_fields" to your INSTALLED_APPS setting like this:
 
     INSTALLED_APPS = (
         ...
