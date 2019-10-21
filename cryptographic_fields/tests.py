@@ -5,7 +5,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 import cryptography.fernet
 
-import fields
+from . import fields
 
 
 class TestSettings(TestCase):
