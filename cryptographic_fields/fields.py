@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 import cryptography.fernet
+import six
 
 
 def get_crypter():
@@ -27,8 +28,8 @@ def get_crypter():
             # else turn the single key into a list of one
             keys = [cryptography.fernet.Fernet(str(configured_keys)), ]
     except Exception as e:
-        raise ImproperlyConfigured(
-            'FIELD_ENCRYPTION_KEY defined incorrectly: {}'.format(str(e))), None, sys.exc_info()[2]
+        six.reraise(ImproperlyConfigured(
+            'FIELD_ENCRYPTION_KEY defined incorrectly: {}'.format(str(e))), None, sys.exc_info()[2])
 
     if len(keys) == 0:
         raise ImproperlyConfigured('No keys defined in setting FIELD_ENCRYPTION_KEY')
@@ -80,7 +81,7 @@ class EncryptedMixin(object):
         if value is None:
             return value
         if PY2:
-            return encrypt_str(unicode(value))
+            return encrypt_str(six.text_type(value))
         # decode the encrypted value to a unicode string, else this breaks in pgsql
         return (encrypt_str(str(value))).decode('utf-8')
 
@@ -127,7 +128,7 @@ class EncryptedBooleanField(EncryptedMixin, django.db.models.BooleanField):
         elif value is False:
             value = '0'
         if PY2:
-            return encrypt_str(unicode(value))
+            return encrypt_str(six.text_type(value))
         # decode the encrypted value to a unicode string, else this breaks in pgsql
         return encrypt_str(str(value)).decode('utf-8')
 
@@ -142,7 +143,7 @@ class EncryptedNullBooleanField(EncryptedMixin, django.db.models.NullBooleanFiel
         elif value is False:
             value = '0'
         if PY2:
-            return encrypt_str(unicode(value))
+            return encrypt_str(six.text_type(value))
         # decode the encrypted value to a unicode string, else this breaks in pgsql
         return encrypt_str(str(value)).decode('utf-8')
 

@@ -33,6 +33,7 @@ setup(
     install_requires=[
         'Django>=1.7',
         'cryptography>=0.8.2',
+        'six>=1.12.0',
     ],
     keywords=['encryption', 'django', 'fields', ],
 )
