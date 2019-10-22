@@ -10,5 +10,6 @@ pep8
 psycopg2
 pyflakes
 pytz
+six
 yolk
 freezegun
