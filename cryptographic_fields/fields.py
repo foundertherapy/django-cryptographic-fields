@@ -4,6 +4,7 @@ import sys
 
 import django.db
 import django.db.models
+from django.utils.encoding import force_text
 from django.utils.six import PY2, string_types
 from django.utils.functional import cached_property
 from django.core import validators
@@ -23,13 +24,13 @@ def get_crypter():
     try:
         # Allow the use of key rotation
         if isinstance(configured_keys, (tuple, list)):
-            keys = [cryptography.fernet.Fernet(str(k)) for k in configured_keys]
+            keys = [cryptography.fernet.Fernet(force_text(k)) for k in configured_keys]
         else:
             # else turn the single key into a list of one
-            keys = [cryptography.fernet.Fernet(str(configured_keys)), ]
+            keys = [cryptography.fernet.Fernet(force_text(configured_keys)), ]
     except Exception as e:
         six.reraise(ImproperlyConfigured(
-            'FIELD_ENCRYPTION_KEY defined incorrectly: {}'.format(str(e))), None, sys.exc_info()[2])
+            'FIELD_ENCRYPTION_KEY defined incorrectly: {}'.format(force_text(e))), None, sys.exc_info()[2])
 
     if len(keys) == 0:
         raise ImproperlyConfigured('No keys defined in setting FIELD_ENCRYPTION_KEY')
@@ -83,7 +84,7 @@ class EncryptedMixin(object):
         if PY2:
             return encrypt_str(six.text_type(value))
         # decode the encrypted value to a unicode string, else this breaks in pgsql
-        return (encrypt_str(str(value))).decode('utf-8')
+        return (encrypt_str(force_text(value))).decode('utf-8')
 
     def get_internal_type(self):
         return "TextField"
@@ -130,7 +131,7 @@ class EncryptedBooleanField(EncryptedMixin, django.db.models.BooleanField):
         if PY2:
             return encrypt_str(six.text_type(value))
         # decode the encrypted value to a unicode string, else this breaks in pgsql
-        return encrypt_str(str(value)).decode('utf-8')
+        return encrypt_str(force_text(value)).decode('utf-8')
 
 
 class EncryptedNullBooleanField(EncryptedMixin, django.db.models.NullBooleanField):
@@ -145,7 +146,7 @@ class EncryptedNullBooleanField(EncryptedMixin, django.db.models.NullBooleanFiel
         if PY2:
             return encrypt_str(six.text_type(value))
         # decode the encrypted value to a unicode string, else this breaks in pgsql
-        return encrypt_str(str(value)).decode('utf-8')
+        return encrypt_str(force_text(value)).decode('utf-8')
 
 
 class EncryptedNumberMixin(EncryptedMixin):
