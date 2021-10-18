@@ -4,7 +4,7 @@ import sys
 
 import django.db
 import django.db.models
-from django.utils.six import PY2, string_types
+from six import PY2, string_types
 from django.utils.functional import cached_property
 from django.core import validators
 from django.conf import settings
